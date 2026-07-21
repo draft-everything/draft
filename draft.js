@@ -67,11 +67,11 @@ process.nextTick(() => { // one tick so all tasks are registered before we look 
 // a welcome tour, only when draft.js is run directly so it never leaks into a task file's tasks
 if (require.main === module) {
   draft('welcome', 'start here — how to write a draft task', () => ({
-    '0 install': 'npm install github:draft-everything/draft',
-    '1 require': "const { draft, series, parallel, option, argv } = require('draft')",
-    '2 a task': "draft('clean', 'empty dist', () => ({ did: 'cleaned' }))",
-    '3 an option': "option('prod', 'minify too', { default: false }); argv().prod",
-    '4 compose': "draft('tour', 'clean, then both builds', series('clean', parallel('build-a', 'build-b')))",
+    '1 install': 'npm install github:draft-everything/draft',
+    '2 require': "const { draft, series, parallel, option, argv } = require('draft')",
+    '3 a task': "draft('clean', 'empty dist', () => ({ did: 'cleaned' }))",
+    '4 an option': "option('prod', 'minify too', { default: false }); argv().prod",
+    '5 compose': "draft('tour', 'clean, then both builds', series('clean', parallel('build-a', 'build-b')))",
     'try next': 'node draft.js tour (runs the compose example above)',
   }));
   draft('clean', 'empty dist', () => ({ did: 'cleaned' }));

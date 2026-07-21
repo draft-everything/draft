@@ -1,4 +1,4 @@
-const { draft, option, argv } = require('./draft');
+const { draft, option, argv } = require('draft');
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
