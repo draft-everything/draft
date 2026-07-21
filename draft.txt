@@ -1,7 +1,10 @@
 draft — a tiny task runner. Write tasks as plain functions, run them from the CLI.
 
-WRITE TASKS (a task file that requires ./draft)
-  const { option, argv, draft, series, parallel, condition } = require('./draft');
+INSTALL
+  npm install github:draft-everything/draft
+
+WRITE TASKS (a task file that requires draft)
+  const { option, argv, draft, series, parallel, condition } = require('draft');
 
   option('production', 'also minify', { default: false });   // name, desc, config
   draft('clean', 'empty the dist folder', () => rm('dist'));  // name, desc, fn
