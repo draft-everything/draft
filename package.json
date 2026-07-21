@@ -1,3 +1,4 @@
 {
-  "name": "draft"
+  "name": "draft",
+  "main": "draft.js"
 }
