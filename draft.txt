@@ -1,0 +1,30 @@
+draft — a tiny task runner. Write tasks as plain functions, run them from the CLI.
+
+WRITE TASKS (a task file that requires ./draft)
+  const { option, argv, draft, series, parallel, condition } = require('./draft');
+
+  option('production', 'also minify', { default: false });   // name, desc, config
+  draft('clean', 'empty the dist folder', () => rm('dist'));  // name, desc, fn
+  draft('build', 'clean then compile', series('clean', 'compile'));
+
+  draft(name, desc, fn)   define a task; fn may be async / return a promise / return
+                          an object (shown as a details block under the ok line)
+  series(...tasks)        run in order, stop on first failure (fail-fast)
+  parallel(...tasks)      run at the same time
+  condition(fn, pred)     run fn only when pred() is true — use it as a step inside
+                          a series/parallel, not as a task you call directly
+  option(name, desc, {default})   declare a flag; read it with argv()
+
+RUN
+  node yourfile.js                 list tasks + options
+  node yourfile.js build           run a task
+  node yourfile.js build --production
+  Output: "ok <task> — <desc>", or an "error" block on failure (exit code non-zero).
+  DRAFT_FORMAT=json prints structured JSON instead of text.
+
+TRY IT
+  node draft.js          a built-in welcome tour (only when run directly)
+  node draft.js tour
+
+NEXT
+  To let an AI agent run your tasks over MCP, see draft.mcp.txt.

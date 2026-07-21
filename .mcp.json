@@ -1,0 +1,12 @@
+{
+  "server": { "name": "draft", "version": "1.0.0" },
+  "instructions": "draft is a task runner where each tool runs a named task that may compose others in series and parallel call the welcome task for a syntax cheat sheet or read the draft guide resource for the full guide",
+  "tools": [
+    { "name": "welcome", "description": "use when someone wants to see how draft works", "file": "draft.js" }
+  ],
+  "resources": [
+    { "name": "draft-guide", "description": "read when you need to write or run tasks with draft", "file": "draft.txt" },
+    { "name": "draft-mcp-guide", "description": "read when you need to expose task files over MCP", "file": "draft.mcp.txt" },
+    { "name": "draft-keycloak-guide", "description": "read when you need to set up keycloak auth for the mcp server", "file": "draft.keycloak.txt" }
+  ]
+}

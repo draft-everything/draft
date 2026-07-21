@@ -1,0 +1,32 @@
+draft as an MCP server — expose your task files to AI agents, config only, no rewrite.
+
+DECLARE WHAT TO EXPOSE (.mcp.json in the working dir)
+  {
+    "server": { "name": "draft", "version": "1.0.0" },
+    "tools": [
+      { "name": "build", "description": "use when ...", "file": "yourfile.js" }
+    ],
+    "resources": [
+      { "name": "guide", "description": "...", "file": "draft.txt" }
+    ]
+  }
+
+  tools[]      each file becomes ONE tool. Its input schema is generated from that
+               file's tasks (a task enum) and options — you never write a schema.
+               Calling the tool runs a task and returns its report.
+  resources[]  each file is readable by the agent as text (docs, config, ...).
+
+RUN THE SERVER
+  node draft.mcp.js mcp              stdio    — for a local client (e.g. Claude Desktop)
+  node draft.mcp.js mcp --port 3000  HTTP     — for remote clients, endpoint POST /mcp
+
+AUTH (HTTP only, optional)
+  "auth": { "issuer": "https://your-oidc-issuer/..." }
+  With an issuer, the HTTP server requires a valid OIDC bearer token, verified offline
+  against the issuer's JWKS (any OIDC provider that signs with RS256, e.g. Keycloak,
+  Auth0, Okta). Set "audience" to also require the token's aud to match. Clients
+  discover login via RFC 9728. No auth block => open server. stdio is always trusted.
+
+WHY
+  One task file, three ways to run it: by hand (CLI), or by an agent over stdio / HTTP.
+  What changes between them is .mcp.json, never your task code.

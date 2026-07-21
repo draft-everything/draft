@@ -1,0 +1,59 @@
+Keycloak setup for draft's MCP auth (RS256, DCR, audience).
+
+draft's MCP server only VERIFIES tokens (issuer, RS256 signature, exp, and audience =
+the server's own URL). Keycloak is the authorization server that logs users in and mints
+those tokens. These are the one-time config steps; repeat them per realm / per deploy.
+Below, MCP_URL is the resource url draft checks as the audience, e.g. http://localhost:3000/mcp.
+
+RUN KEYCLOAK (dev)
+  docker run -d --name mcp-keycloak -p 127.0.0.1:8080:8080 \
+    -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+    quay.io/keycloak/keycloak:latest start-dev
+
+  All kcadm commands below run inside the container; log in first:
+  docker exec mcp-keycloak /opt/keycloak/bin/kcadm.sh config credentials \
+    --server http://localhost:8080 --realm master --user admin --password admin
+
+REALM + SCOPE
+  # a realm to hold the MCP users/clients
+  kcadm create realms -s realm=mcp -s enabled=true
+  # a client scope we'll attach the audience mapper to
+  kcadm create client-scopes -r mcp -s name=mcp:tools -s protocol=openid-connect \
+    -s 'attributes."include.in.token.scope"=true'
+
+AUDIENCE (why: draft checks aud == MCP_URL; every token must carry it)
+  # add an audience mapper to the scope so tokens get aud = MCP_URL
+  SID=<id of the mcp:tools scope>   # kcadm get client-scopes -r mcp
+  kcadm create client-scopes/$SID/protocol-mappers/models -r mcp \
+    -s name=mcp-aud -s protocol=openid-connect -s protocolMapper=oidc-audience-mapper \
+    -s 'config."included.custom.audience"=http://localhost:3000/mcp' \
+    -s 'config."access.token.claim"=true'
+  # make the scope a realm DEFAULT so EVERY client — including ones registered later
+  # via Dynamic Client Registration — inherits it automatically (this is the durable part)
+  kcadm update realms/mcp/default-default-client-scopes/$SID -r mcp
+
+DYNAMIC CLIENT REGISTRATION (why: Claude Code / Cursor self-register a client on connect)
+  kcadm update realms/mcp -s registrationAllowed=true
+  # the Trusted Hosts policy must allow the address the registration request comes from.
+  # locally, that's the docker gateway (172.17.0.1) plus localhost. find the id:
+  #   kcadm get components -r mcp -q type=org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy
+  kcadm update components/<trusted-hosts-policy-id> -r mcp \
+    -s 'config."trusted-hosts"=["172.17.0.1","127.0.0.1","localhost"]' \
+    -s 'config."client-uris-must-match"=["false"]'
+
+A TEST USER
+  kcadm create users -r mcp -s username=tester -s enabled=true -s emailVerified=true \
+    -s email=tester@example.com -s firstName=Test -s lastName=User
+  kcadm set-password -r mcp --username tester --new-password test123 --temporary=false
+  # note: Keycloak's Verify Profile action rejects login if firstName/lastName are missing
+
+POINT DRAFT AT IT (.mcp.json)
+  "auth": { "issuer": "http://localhost:8080/realms/mcp" }
+  No audience field is needed — draft derives it from its own URL and always checks it.
+
+GOTCHAS WE HIT
+  - "Account is not fully set up" on login: user missing firstName/lastName (Verify Profile).
+  - "Host not trusted" on registration: docker gateway IP (172.17.0.1) not in trusted-hosts.
+  - Token accepted by hand but rejected on reconnect: DCR client lacked the audience mapper —
+    fixed by making mcp:tools a realm default scope so DCR clients inherit it.
+  - draft only accepts RS256; providers issuing ES256 will fail signature verification.
