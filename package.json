@@ -1,4 +1,5 @@
 {
   "name": "draft",
-  "exports": "./draft.js"
+  "exports": "./draft.js",
+  "bin": { "draft": "./draft.cli.js" }
 }
